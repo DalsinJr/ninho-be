@@ -1,0 +1,52 @@
+server:
+  port: ${PORT:18090}
+  servlet:
+    session:
+      timeout: 10h
+
+spring:
+  application:
+    name: ninho-be
+  docker:
+    compose:
+      enabled: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+  datasource:
+    url: ${NINHO_DB_URL:jdbc:postgresql://localhost:15440/ninho}
+    username: ${NINHO_DB_USERNAME:ninho}
+    password: ${NINHO_DB_PASSWORD:ninho}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  mail:
+    host: ${NINHO_SMTP_HOST:localhost}
+    port: ${NINHO_SMTP_PORT:11025}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+info:
+  app:
+    name: ${spring.application.name}
+
+# Demais chaves de ninho.* (ia, ocr, extracao, workers — SPEC §13.3)
+# entram junto com a feature que as consome.
+ninho:
+  frontend-url: ${NINHO_FRONTEND_URL:http://localhost:15180}
+  cors:
+    allowed-origins: ${NINHO_CORS_ALLOWED_ORIGINS:http://localhost:15180}
+  storage:
+    endpoint: ${NINHO_MINIO_ENDPOINT:http://localhost:19000}
+    access-key: ${NINHO_MINIO_ACCESS_KEY:ninho}
+    secret-key: ${NINHO_MINIO_SECRET_KEY:ninho12345}
+    bucket: ${NINHO_MINIO_BUCKET:ninho-curriculos}
+    presign-ttl: PT5M
