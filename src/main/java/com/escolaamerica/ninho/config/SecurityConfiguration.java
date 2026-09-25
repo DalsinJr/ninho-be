@@ -79,6 +79,7 @@ public class SecurityConfiguration {
         http
             .securityContext(context -> context.securityContextRepository(securityContextRepository))
             .addFilterAfter(new UsuarioAtivoFilter(autenticacao, securityContextRepository), SecurityContextHolderFilter.class)
+            .addFilterAfter(new ContextoRequisicaoFilter(), UsuarioAtivoFilter.class)
             .csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults())
             .httpBasic(AbstractHttpConfigurer::disable)
