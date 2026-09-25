@@ -22,4 +22,8 @@ Regras e fluxo de git: `AGENTS.md`. Fonte de verdade: `docs/spec_software_eav.md
 
 ## Estado
 
-Fase F0 em andamento: esqueleto executável, sem migrations de domínio. MinIO já integrado (`arquivo/service/StorageService`, health "storage"). Próximo passo: `V1__create_iam.sql`, `V2__seed_usuario_admin.sql` e login (SPEC §7.1).
+Fatia S1 (fundação e acesso) implementada no backend: migrations V1–V3, login por sessão (`/auth/*`), cadastro de usuários (`/usuarios`) com as regras da §7.1, `AutorizacaoService`, `AuditoriaService`, logs sem PII e `ArquiteturaTest`. Admin local: `admin@ninho.local` / `ninho123`.
+
+Planos das fatias: `../../docs/spec/ninho/mvp/` (workspace). Próxima fatia: S2 (estrutura organizacional).
+
+Testes de integração estendem `IntegracaoApiBase` (Testcontainers condicionado a Docker; helpers `sessaoDe`, `criarUsuario`). Sem jenv no shell, rodar com `JAVA_HOME` apontando para o JDK 21.
