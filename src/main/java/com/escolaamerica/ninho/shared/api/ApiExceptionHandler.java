@@ -23,11 +23,15 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-/** Tabela de erros da SPEC §5.1: o único {@code @RestControllerAdvice} do sistema. */
+/**
+ * Tabela de erros da SPEC §5.1: o único {@code @RestControllerAdvice} do sistema. Os {@code @ResponseStatus}
+ * só documentam as respostas de erro no OpenAPI; o status efetivo é o do {@code ResponseEntity}.
+ */
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class ApiExceptionHandler {
@@ -42,17 +46,20 @@ public class ApiExceptionHandler {
     private final Clock clock;
 
     @ExceptionHandler({ResourceNotFoundException.class, NoResourceFoundException.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     ResponseEntity<ApiErrorResponse> handleNotFound(Exception ex, HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
 
     @ExceptionHandler(BusinessRuleViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     ResponseEntity<ApiErrorResponse> handleBusinessRule(BusinessRuleViolationException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
     /** Cobre também {@code MethodArgumentNotValidException} (subclasse de {@link BindException}). */
     @ExceptionHandler(BindException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     ResponseEntity<ApiErrorResponse> handleBind(BindException ex, HttpServletRequest request) {
         List<FieldError> erros = ex.getBindingResult().getFieldErrors();
         List<CampoInvalido> campos = erros.stream()
@@ -85,6 +92,7 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler(ConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
     ResponseEntity<ApiErrorResponse> handleConflict(ConflictException ex, HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
@@ -102,11 +110,13 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler(AuthenticationException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
     ResponseEntity<ApiErrorResponse> handleAuthentication(AuthenticationException ex, HttpServletRequest request) {
         return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
     ResponseEntity<ApiErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
         return build(HttpStatus.FORBIDDEN, ex.getMessage(), request);
     }
@@ -118,6 +128,7 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     ResponseEntity<ApiErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
         log.error("Unhandled exception on {} {}", request.getMethod(), request.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro inesperado", request);
