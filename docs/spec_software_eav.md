@@ -452,20 +452,17 @@ BEGIN
 END $$ LANGUAGE plpgsql;
 ```
 
-### 4.3 Migrations iniciais
+### 4.3 Migrations
 
-| Migration                                  | Conteúdo                                                        |
-| ------------------------------------------ | --------------------------------------------------------------- |
-| `V1__create_iam.sql`                       | `iam_usuario`, `iam_usuario_papel`                              |
-| `V2__seed_usuario_admin.sql`               | usuário administrador local (§7.1)                              |
-| `V3__create_estrutura_e_pessoa.sql`        | `core_*`                                                        |
-| `V4__create_lgpd.sql`                      | `lgpd_*` (antes de `rs_`, que referencia o termo)               |
-| `V5__create_recrutamento.sql`              | `rs_*`                                                          |
-| `V6__create_triagem.sql`                   | `ia_*` e a FK `rs_decisao_humana.analise_ia_id → ia_analise`    |
-| `V7__create_sistema.sql`                   | `sys_*` e as funções de imutabilidade (§4.2, §4.10)             |
-| `V8__invariantes.sql`                      | gatilhos e funções das invariantes (§4.10)                       |
-| `V9__seed_parametros.sql`                  | etapas padrão, política de retenção, encarregado, configuração de IA, termo v1 (minuta) |
-| `V10__seed_estrutura_inicial.sql`          | unidades, departamentos e centros de custo reais (§17.3)        |
+As migrations são criadas **por fatia de implementação**, cada uma com só as tabelas que a fatia usa, e numeradas na ordem de entrega (plano de implementação, decisão ID-01). A ordem de criação respeita as FKs: uma tabela só aparece depois das tabelas que ela referencia.
+
+| Migration                                  | Fatia | Conteúdo                                                        |
+| ------------------------------------------ | ----- | --------------------------------------------------------------- |
+| `V1__create_iam.sql`                       | S1    | `iam_usuario`, `iam_usuario_papel`                              |
+| `V2__seed_usuario_admin.sql`               | S1    | usuário administrador local (§7.1)                              |
+| `V3__create_sys_auditoria.sql`             | S1    | `sys_auditoria` (as demais tabelas `sys_` entram nas fatias que as usam) |
+
+As versões seguintes são acrescentadas a esta tabela por cada fatia, na implementação.
 
 Toda migration é imutável depois de aplicada; correções entram em uma nova versão.
 
@@ -1205,6 +1202,8 @@ Nada abaixo é implementado no MVP.
   "fields": [{ "field": "cargoIds", "code": "OBRIGATORIO" }]
 }
 ```
+
+Códigos de `fields`: `OBRIGATORIO` (campo ausente ou vazio), `TAMANHO` (tamanho ou valor fora do limite), `FORMATO` (e-mail ou padrão inválido) e `INVALIDO` (demais restrições).
 
 | Exceção                          | HTTP |
 | -------------------------------- | ---- |
