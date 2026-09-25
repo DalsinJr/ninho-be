@@ -1,12 +1,20 @@
 package com.escolaamerica.ninho;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -31,6 +39,36 @@ public abstract class IntegracaoApiBase {
 
     @Autowired
     protected JdbcTemplate jdbc;
+
+    @Autowired
+    protected ObjectMapper json;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    /** Faz login pela API e devolve a sessão autenticada. */
+    protected MockHttpSession sessaoDe(String email, String senha) throws Exception {
+        return (MockHttpSession) mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsString(Map.of("email", email, "senha", senha))))
+            .andExpect(status().isOk())
+            .andReturn().getRequest().getSession(false);
+    }
+
+    protected MockHttpSession sessaoDoAdmin() throws Exception {
+        return sessaoDe(ADMIN_EMAIL, ADMIN_SENHA);
+    }
+
+    /** Cria um usuário direto no banco (fixture), com a senha já em BCrypt. */
+    protected UUID criarUsuario(String nome, String email, String senha, boolean ativo, String... papeis) {
+        UUID id = UUID.randomUUID();
+        jdbc.update("INSERT INTO iam_usuario (id, nome, email, senha_hash, ativo) VALUES (?, ?, ?, ?, ?)",
+            id, nome, email, passwordEncoder.encode(senha), ativo);
+        for (String papel : papeis) {
+            jdbc.update("INSERT INTO iam_usuario_papel (usuario_id, papel) VALUES (?, ?)", id, papel);
+        }
+        return id;
+    }
 
     /** Volta o banco ao estado das migrations: só o admin semeado, ativo, com a senha e os papéis de origem. */
     @AfterEach
